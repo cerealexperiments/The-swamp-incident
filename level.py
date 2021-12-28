@@ -60,6 +60,7 @@ class Level:
 
 		# Enemy
 		enemy_layout = import_csv_layout(level_data["enemies"])
+		self.enemy_speed = 4
 		self.enemy_sprites = self.create_tile_group(enemy_layout, "enemies")
 
 		# Enemy death effect
@@ -73,10 +74,8 @@ class Level:
 		level_width = len(terrain_layout[0]) * tile_size
 		self.water = Water(screen_height - 20, level_width)
 
-	@staticmethod
-	def create_tile_group(layout, type):
+	def create_tile_group(self, layout, type):
 		sprite_group = pygame.sprite.Group()
-
 		for row_index, row in enumerate(layout):
 			for col_index, val in enumerate(row):
 				if val != "-1":
@@ -99,6 +98,7 @@ class Level:
 							sprite = Coin(tile_size, x, y, "graphics/coins/silver", 1)
 					if type == "enemies":
 						sprite = Enemy(tile_size, x, y)
+						sprite.speed = self.enemy_speed
 					if type == "constraint":
 						sprite = Tile(tile_size, x, y)
 					sprite_group.add(sprite)
@@ -195,7 +195,6 @@ class Level:
 
 	def check_win(self):
 		if pygame.sprite.spritecollide(self.player.sprite, self.goal, False):
-			print('Wong')
 			self.create_game()
 
 	# Coin collisions

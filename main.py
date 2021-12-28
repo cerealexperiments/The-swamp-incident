@@ -6,16 +6,16 @@ from game_data import levels
 from ui import UI
 
 
-# IT WORKS LETSGOOOOOOOOOOOOOOOOOOO
+# IT WORKS LETSGOOOOOOOOOOOOOOOOOOO (last commit fr)
 class Game:
     def __init__(self):
-        self.max_levels = len(levels)
         # Player
         self.max_health = 100
         self.cur_health = 100
         self.coins = 0
 
         # Setup
+        self.max_levels = len(levels)
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.status = 'game'
@@ -25,12 +25,17 @@ class Game:
         self.WHITE = (255, 255, 255)
         self.death_sound = pygame.mixer.Sound("audio/effects/hit.wav")
         self.death_sound_replay = 0
+        self.ending_music = pygame.mixer.Sound("audio/ending.wav")
+        self.ending_music_replay = 0
+        self.game_over = pygame.mixer.Sound("audio/game over.wav")
+        self.game_over_replay = 0
         self.alive = True
         self.won = False
 
         # User interface
         self.ui = UI(screen)
 
+    # Setup methods
     def create_level(self, current_level):
         self.level = Level(current_level, screen, self.set_game, self.change_coins, self.change_health)
         self.status = 'level'
@@ -38,16 +43,12 @@ class Game:
     def set_game(self):
         self.status = 'game'
 
+    # Gameplay
     def change_coins(self, amount):
         self.coins += amount
 
     def change_health(self, amount):
         self.cur_health += amount
-
-    def get_input(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]:
-            self.alive = True
 
     def check_game_over(self):
         if self.cur_health <= 0:
@@ -59,12 +60,15 @@ class Game:
             self.level.coin_sound.set_volume(0)
             screen.fill("black")
             self.draw_text("GAME OVER", 50, 650, 400)
+            if self.game_over_replay < 1:
+                self.game_over.play()
+                self.game_over_replay += 1
             self.cur_health = 100
             self.coins = 0
             self.alive = False
             self.cur_level = self.cur_level
             self.set_game()
-
+        # If player falls off
         elif self.level.player.sprite.rect.top > screen_height:
             if self.death_sound_replay < 1:
                 self.death_sound.play()
@@ -74,6 +78,9 @@ class Game:
             self.level.coin_sound.set_volume(0)
             screen.fill("black")
             self.draw_text("GAME OVER", 50, 650, 400)
+            if self.game_over_replay < 1:
+                self.game_over.play()
+                self.game_over_replay += 1
             self.cur_health = 100
             self.coins = 0
             self.alive = False
@@ -104,7 +111,6 @@ class Game:
             except KeyError:
                 self.alive = False
                 self.won = True
-
         if self.alive:
             self.level.run()
             self.check_win()
@@ -113,28 +119,45 @@ class Game:
             self.check_game_over()
         elif self.won:
             self.level.bg_music.set_volume(0)
-            pygame.mixer.pause()
             screen.fill("black")
             self.draw_text("THANKS FOR PLAYING", 50, 650, 400)
+            if self.ending_music_replay < 1:
+                self.ending_music.play()
+                self.ending_music_replay += 1
         else:
             self.level.bg_music.set_volume(0)
-            pygame.mixer.pause()
             screen.fill("black")
             self.draw_text("GAME OVER", 50, 650, 400)
 
 
-# setup
+# Setup
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 game = Game()
 background_image = pygame.image.load("graphics/decoration/Background.png")
 
+# Cheat sound effects
+invincibility = pygame.mixer.Sound("audio/invincibility.wav")
+za_warudo = pygame.mixer.Sound("audio/za warudo.wav")
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        # Toggle invincibility
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_u:
+                game.max_health = 10000000000
+                game.cur_health = 10000000000
+                invincibility.play()
+        # Use Za Warudo (doesn't work for now)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_z:
+                game.level.enemy_speed = 0
+                za_warudo.play()
+
     screen.fill("black")
     screen.blit(background_image, (0, 0))
     game.run()
